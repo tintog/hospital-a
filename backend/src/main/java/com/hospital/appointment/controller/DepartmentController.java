@@ -1,0 +1,28 @@
+package com.hospital.appointment.controller;
+
+import com.hospital.appointment.common.result.Result;
+import com.hospital.appointment.entity.Department;
+import com.hospital.appointment.service.DepartmentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/department")
+@Tag(name = "科室接口")
+public class DepartmentController {
+
+    @Autowired
+    private DepartmentService departmentService;
+
+    @GetMapping("/list")
+    @Operation(summary = "科室列表")
+    public Result<List<Department>> list() {
+        return departmentService.list();
+    }
+}
