@@ -18,6 +18,9 @@
         <el-menu-item index="/members">
           <el-icon><User /></el-icon>就诊人管理
         </el-menu-item>
+        <el-menu-item index="/profile">
+          <el-icon><Setting /></el-icon>个人信息
+        </el-menu-item>
       </el-menu>
       <div class="header-right">
         <el-dropdown @command="handleCommand">

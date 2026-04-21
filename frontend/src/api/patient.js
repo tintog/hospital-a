@@ -4,6 +4,14 @@ export function getProfile() {
   return request.get('/patient/profile')
 }
 
+export function updatePatientPhone(data) {
+  return request.put('/patient/profile/phone', data)
+}
+
+export function updatePatientPassword(data) {
+  return request.put('/patient/profile/password', data)
+}
+
 export function fetchMembers() {
   return request.get('/patient/members')
 }

@@ -16,6 +16,14 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>数据面板</span>
         </el-menu-item>
+        <el-menu-item index="/admin/patients">
+          <el-icon><User /></el-icon>
+          <span>患者管理</span>
+        </el-menu-item>
+        <el-menu-item index="/admin/doctors">
+          <el-icon><UserFilled /></el-icon>
+          <span>医生管理</span>
+        </el-menu-item>
         <el-menu-item index="/admin/schedule">
           <el-icon><Calendar /></el-icon>
           <span>排班管理</span>

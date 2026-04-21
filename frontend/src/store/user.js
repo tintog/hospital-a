@@ -7,6 +7,7 @@ export const useUserStore = defineStore('user', () => {
   const username = ref(localStorage.getItem('username') || '')
   const realName = ref(localStorage.getItem('realName') || '')
   const role = ref(localStorage.getItem('role') || '')
+  const phone = ref(localStorage.getItem('phone') || '')
 
   function setLoginInfo(data) {
     token.value = data.token
@@ -14,12 +15,14 @@ export const useUserStore = defineStore('user', () => {
     username.value = data.username
     realName.value = data.realName || ''
     role.value = data.role
+    phone.value = data.phone || data.username || ''
 
     localStorage.setItem('token', data.token)
     localStorage.setItem('userId', data.userId)
     localStorage.setItem('username', data.username)
     localStorage.setItem('realName', data.realName || '')
     localStorage.setItem('role', data.role)
+    localStorage.setItem('phone', data.phone || data.username || '')
   }
 
   function logout() {
@@ -28,14 +31,16 @@ export const useUserStore = defineStore('user', () => {
     username.value = ''
     realName.value = ''
     role.value = ''
+    phone.value = ''
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
     localStorage.removeItem('username')
     localStorage.removeItem('realName')
     localStorage.removeItem('role')
+    localStorage.removeItem('phone')
   }
 
   const isLoggedIn = () => !!token.value
 
-  return { token, userId, username, realName, role, setLoginInfo, logout, isLoggedIn }
+  return { token, userId, username, realName, role, phone, setLoginInfo, logout, isLoggedIn }
 })

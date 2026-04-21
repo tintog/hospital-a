@@ -32,6 +32,7 @@ const routes = [
       { path: 'booking/:doctorId', name: 'SlotCalendar', component: () => import('@/views/patient/SlotCalendar.vue'), props: true },
       { path: 'appointments', name: 'MyAppointments', component: () => import('@/views/patient/MyAppointments.vue') },
       { path: 'members', name: 'MemberManage', component: () => import('@/views/patient/MemberManage.vue') },
+      { path: 'profile', name: 'PatientProfile', component: () => import('@/views/patient/Profile.vue') },
       { path: 'realname', name: 'RealNameAuth', component: () => import('@/views/patient/RealNameAuth.vue') }
     ]
   },
@@ -42,6 +43,8 @@ const routes = [
     children: [
       { path: '', redirect: '/admin/dashboard' },
       { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/admin/Dashboard.vue') },
+      { path: 'patients', name: 'PatientManage', component: () => import('@/views/admin/PatientManage.vue') },
+      { path: 'doctors', name: 'DoctorManage', component: () => import('@/views/admin/DoctorManage.vue') },
       { path: 'schedule', name: 'ScheduleManage', component: () => import('@/views/admin/ScheduleManage.vue') },
       { path: 'appointments', name: 'AdminAppointments', component: () => import('@/views/admin/AppointmentList.vue') },
       { path: 'statistics', name: 'Statistics', component: () => import('@/views/admin/Statistics.vue') },
@@ -55,7 +58,8 @@ const routes = [
     children: [
       { path: '', redirect: '/doctor/schedule' },
       { path: 'schedule', name: 'DoctorSchedule', component: () => import('@/views/doctor/MySchedule.vue') },
-      { path: 'patients', name: 'TodayPatients', component: () => import('@/views/doctor/TodayPatients.vue') }
+      { path: 'patients', name: 'TodayPatients', component: () => import('@/views/doctor/TodayPatients.vue') },
+      { path: 'profile', name: 'DoctorProfile', component: () => import('@/views/doctor/Profile.vue') }
     ]
   },
   {

@@ -2,6 +2,8 @@ package com.hospital.appointment.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.hospital.appointment.common.dto.MemberReq;
+import com.hospital.appointment.common.dto.PasswordUpdateReq;
+import com.hospital.appointment.common.dto.PhoneUpdateReq;
 import com.hospital.appointment.common.exception.BusinessException;
 import com.hospital.appointment.common.result.Result;
 import com.hospital.appointment.entity.Patient;
@@ -10,6 +12,7 @@ import com.hospital.appointment.mapper.PatientMapper;
 import com.hospital.appointment.mapper.PatientMemberMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +26,9 @@ public class PatientService {
 
     @Autowired
     private PatientMemberMapper memberMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public Result<Patient> getProfile(Long patientId) {
         Patient patient = patientMapper.selectById(patientId);
@@ -39,6 +45,44 @@ public class PatientService {
                         .eq(PatientMember::getPatientId, patientId)
                         .orderByDesc(PatientMember::getCreatedAt));
         return Result.success(members);
+    }
+
+    public Result<String> updatePhone(Long patientId, PhoneUpdateReq req) {
+        Patient patient = patientMapper.selectById(patientId);
+        if (patient == null) {
+            throw new BusinessException("患者不存在");
+        }
+        if (req.getNewPhone().equals(patient.getPhone())) {
+            throw new BusinessException("新手机号不能与当前手机号一致");
+        }
+
+        Patient exists = patientMapper.selectOne(
+                new LambdaQueryWrapper<Patient>()
+                        .eq(Patient::getPhone, req.getNewPhone()));
+        if (exists != null && !exists.getId().equals(patientId)) {
+            throw new BusinessException("该手机号已被使用");
+        }
+
+        patient.setPhone(req.getNewPhone());
+        patientMapper.updateById(patient);
+        return Result.success("手机号修改成功", null);
+    }
+
+    public Result<String> updatePassword(Long patientId, PasswordUpdateReq req) {
+        Patient patient = patientMapper.selectById(patientId);
+        if (patient == null) {
+            throw new BusinessException("患者不存在");
+        }
+        if (!passwordEncoder.matches(req.getOldPassword(), patient.getPassword())) {
+            throw new BusinessException("旧密码错误");
+        }
+        if (req.getOldPassword().equals(req.getNewPassword())) {
+            throw new BusinessException("新密码不能与旧密码相同");
+        }
+
+        patient.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        patientMapper.updateById(patient);
+        return Result.success("密码修改成功，请重新登录", null);
     }
 
     public Result<PatientMember> addMember(Long patientId, MemberReq req) {

@@ -1,11 +1,17 @@
 package com.hospital.appointment.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.hospital.appointment.common.dto.AdminBlacklistReq;
+import com.hospital.appointment.common.dto.AdminDoctorCreateReq;
+import com.hospital.appointment.common.dto.AdminDoctorUpdateReq;
 import com.hospital.appointment.common.dto.ScheduleCreateReq;
 import com.hospital.appointment.common.result.Result;
+import com.hospital.appointment.common.vo.AdminDoctorVO;
+import com.hospital.appointment.common.vo.AdminPatientVO;
 import com.hospital.appointment.common.vo.AppointmentVO;
 import com.hospital.appointment.common.vo.StatisticsVO;
 import com.hospital.appointment.entity.Schedule;
+import com.hospital.appointment.service.AdminManageService;
 import com.hospital.appointment.service.AppointmentService;
 import com.hospital.appointment.service.ScheduleService;
 import com.hospital.appointment.service.SlotService;
@@ -38,6 +44,9 @@ public class AdminController {
     @Autowired
     private StatisticsService statisticsService;
 
+    @Autowired
+    private AdminManageService adminManageService;
+
     @PostMapping("/schedule/create")
     @Operation(summary = "创建排班")
     public Result<Schedule> createSchedule(@Valid @RequestBody ScheduleCreateReq req) {
@@ -60,14 +69,10 @@ public class AdminController {
     @Operation(summary = "排班列表")
     public Result<List<Schedule>> scheduleList(
             @RequestParam(required = false) Long doctorId,
-            @RequestParam(required = false) String doctorName,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (doctorId != null) {
             return scheduleService.listByDoctor(doctorId, startDate, endDate);
-        }
-        if (doctorName != null && !doctorName.isBlank()) {
-            return scheduleService.listByDoctorName(doctorName, startDate, endDate);
         }
         return scheduleService.listAll(startDate);
     }
@@ -100,5 +105,83 @@ public class AdminController {
     @Operation(summary = "统计面板")
     public Result<StatisticsVO> dashboard() {
         return statisticsService.getDashboardStats();
+    }
+
+    @GetMapping("/patient/list")
+    @Operation(summary = "患者列表")
+    public Result<Page<AdminPatientVO>> patientList(
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String realName,
+            @RequestParam(required = false) Integer authStatus,
+            @RequestParam(required = false) Integer blacklistStatus,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminManageService.listPatients(phone, realName, authStatus, blacklistStatus, page, size);
+    }
+
+    @GetMapping("/patient/{id}")
+    @Operation(summary = "患者详情")
+    public Result<AdminPatientVO> patientDetail(@PathVariable Long id) {
+        return adminManageService.patientDetail(id);
+    }
+
+    @PutMapping("/patient/{id}/blacklist")
+    @Operation(summary = "拉黑患者")
+    public Result<String> blacklistPatient(@PathVariable Long id, @Valid @RequestBody AdminBlacklistReq req) {
+        return adminManageService.blacklistPatient(id, req);
+    }
+
+    @PutMapping("/patient/{id}/unblacklist")
+    @Operation(summary = "解除患者黑名单")
+    public Result<String> unblacklistPatient(@PathVariable Long id) {
+        return adminManageService.unblacklistPatient(id);
+    }
+
+    @DeleteMapping("/patient/{id}")
+    @Operation(summary = "逻辑删除患者")
+    public Result<String> deletePatient(@PathVariable Long id) {
+        return adminManageService.deletePatient(id);
+    }
+
+    @GetMapping("/doctor/list")
+    @Operation(summary = "医生列表")
+    public Result<Page<AdminDoctorVO>> doctorList(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long deptId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminManageService.listDoctors(name, deptId, title, status, page, size);
+    }
+
+    @GetMapping("/doctor/{id}")
+    @Operation(summary = "医生详情")
+    public Result<AdminDoctorVO> doctorDetail(@PathVariable Long id) {
+        return adminManageService.doctorDetail(id);
+    }
+
+    @PostMapping("/doctor")
+    @Operation(summary = "新增医生")
+    public Result<AdminDoctorVO> createDoctor(@Valid @RequestBody AdminDoctorCreateReq req) {
+        return adminManageService.createDoctor(req);
+    }
+
+    @PutMapping("/doctor/{id}")
+    @Operation(summary = "更新医生")
+    public Result<String> updateDoctor(@PathVariable Long id, @Valid @RequestBody AdminDoctorUpdateReq req) {
+        return adminManageService.updateDoctor(id, req);
+    }
+
+    @DeleteMapping("/doctor/{id}")
+    @Operation(summary = "逻辑删除医生")
+    public Result<String> deleteDoctor(@PathVariable Long id) {
+        return adminManageService.deleteDoctor(id);
+    }
+
+    @PostMapping("/doctor/backfill-accounts")
+    @Operation(summary = "一键补齐医生账号")
+    public Result<String> backfillDoctorAccounts() {
+        return adminManageService.backfillDoctorAccounts();
     }
 }

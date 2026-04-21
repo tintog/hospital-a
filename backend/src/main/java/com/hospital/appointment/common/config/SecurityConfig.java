@@ -48,7 +48,13 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "DEPT_ADMIN")
-                .requestMatchers("/doctor/my-schedule", "/doctor/today-patients").hasRole("DOCTOR")
+                .requestMatchers(
+                    "/doctor/my-schedule",
+                    "/doctor/today-patients",
+                    "/doctor/profile",
+                    "/doctor/profile/phone",
+                    "/doctor/profile/password"
+                ).hasRole("DOCTOR")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

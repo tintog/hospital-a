@@ -1,6 +1,8 @@
 package com.hospital.appointment.controller;
 
 import com.hospital.appointment.common.dto.MemberReq;
+import com.hospital.appointment.common.dto.PasswordUpdateReq;
+import com.hospital.appointment.common.dto.PhoneUpdateReq;
 import com.hospital.appointment.common.result.Result;
 import com.hospital.appointment.entity.Patient;
 import com.hospital.appointment.entity.PatientMember;
@@ -34,6 +36,20 @@ public class PatientController {
     public Result<List<PatientMember>> getMembers(Authentication authentication) {
         Long patientId = (Long) authentication.getPrincipal();
         return patientService.getMembers(patientId);
+    }
+
+    @PutMapping("/profile/phone")
+    @Operation(summary = "修改手机号")
+    public Result<String> updatePhone(@Valid @RequestBody PhoneUpdateReq req, Authentication authentication) {
+        Long patientId = (Long) authentication.getPrincipal();
+        return patientService.updatePhone(patientId, req);
+    }
+
+    @PutMapping("/profile/password")
+    @Operation(summary = "修改密码")
+    public Result<String> updatePassword(@Valid @RequestBody PasswordUpdateReq req, Authentication authentication) {
+        Long patientId = (Long) authentication.getPrincipal();
+        return patientService.updatePassword(patientId, req);
     }
 
     @PostMapping("/members")

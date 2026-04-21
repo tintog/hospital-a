@@ -20,6 +20,10 @@
           <el-icon><User /></el-icon>
           <span>今日患者</span>
         </el-menu-item>
+        <el-menu-item index="/doctor/profile">
+          <el-icon><Setting /></el-icon>
+          <span>个人信息</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

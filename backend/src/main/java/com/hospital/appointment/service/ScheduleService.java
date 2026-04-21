@@ -21,9 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -52,32 +50,6 @@ public class ScheduleService {
             wrapper.le(Schedule::getWorkDate, endDate);
         }
         wrapper.orderByAsc(Schedule::getWorkDate).orderByAsc(Schedule::getShiftType);
-        return Result.success(scheduleMapper.selectList(wrapper));
-    }
-
-    public Result<List<Schedule>> listByDoctorName(String doctorName, LocalDate startDate, LocalDate endDate) {
-        List<Long> doctorIds = doctorMapper.selectList(new LambdaQueryWrapper<Doctor>()
-                        .like(Doctor::getName, doctorName)
-                        .orderByAsc(Doctor::getId))
-                .stream()
-                .map(Doctor::getId)
-                .collect(Collectors.toList());
-
-        if (doctorIds.isEmpty()) {
-            return Result.success(Collections.emptyList());
-        }
-
-        LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<Schedule>()
-                .in(Schedule::getDoctorId, doctorIds)
-                .eq(Schedule::getStatus, 1);
-        if (startDate != null) {
-            wrapper.ge(Schedule::getWorkDate, startDate);
-        }
-        if (endDate != null) {
-            wrapper.le(Schedule::getWorkDate, endDate);
-        }
-        wrapper.orderByAsc(Schedule::getWorkDate).orderByAsc(Schedule::getShiftType);
-
         return Result.success(scheduleMapper.selectList(wrapper));
     }
 

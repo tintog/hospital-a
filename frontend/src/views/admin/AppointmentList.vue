@@ -12,41 +12,8 @@
             <el-option label="已完成" :value="3" />
           </el-select>
         </el-form-item>
-        <el-form-item label="科室">
-          <el-select
-            v-model="filter.deptId"
-            placeholder="全部科室"
-            clearable
-            style="width: 180px;"
-            @change="handleDeptChange"
-          >
-            <el-option
-              v-for="dept in departmentOptions"
-              :key="dept.id"
-              :label="dept.name"
-              :value="dept.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="医生">
-          <el-select
-            v-model="filter.doctorId"
-            placeholder="全部医生"
-            filterable
-            clearable
-            style="width: 220px;"
-            @change="loadData"
-          >
-            <el-option
-              v-for="doctor in queryDoctorOptions"
-              :key="doctor.id"
-              :label="`${doctor.name}（${doctor.title || '未设置职称'}）`"
-              :value="doctor.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="loadData">查询</el-button>
+        <el-form-item label="医生ID">
+          <el-input v-model="filter.doctorId" placeholder="医生ID" style="width:100px;" clearable @change="loadData" />
         </el-form-item>
       </el-form>
 
@@ -95,24 +62,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchAdminAppointments, adminCancelAppointment } from '@/api/admin'
-import { fetchDoctors } from '@/api/doctor'
-import { fetchDepartments } from '@/api/department'
 
 const records = ref([])
 const total = ref(0)
 const page = ref(1)
-const doctorOptions = ref([])
-const departmentOptions = ref([])
-const filter = reactive({ status: null, deptId: null, doctorId: null })
+const filter = reactive({ status: null, doctorId: '' })
 const statusType = { 0: 'warning', 1: 'success', 2: 'danger', 3: 'info', 4: '' }
-
-const queryDoctorOptions = computed(() => {
-  if (!filter.deptId) return doctorOptions.value
-  return doctorOptions.value.filter(d => d.deptId === filter.deptId)
-})
 
 async function loadData() {
   const params = { page: page.value, size: 10 }
@@ -123,29 +81,11 @@ async function loadData() {
   total.value = res.data.total || 0
 }
 
-async function loadDoctors() {
-  const res = await fetchDoctors()
-  doctorOptions.value = res.data || []
-}
-
-async function loadDepartments() {
-  const res = await fetchDepartments()
-  departmentOptions.value = res.data || []
-}
-
-function handleDeptChange() {
-  filter.doctorId = null
-  loadData()
-}
-
 async function handleCancel(id) {
   await adminCancelAppointment(id, '管理员取消')
   ElMessage.success('已取消')
   await loadData()
 }
 
-onMounted(async () => {
-  await Promise.all([loadDoctors(), loadDepartments()])
-  await loadData()
-})
+onMounted(() => loadData())
 </script>

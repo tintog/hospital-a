@@ -9,37 +9,8 @@
       </template>
 
       <el-form :inline="true" style="margin-bottom:16px;">
-        <el-form-item label="科室">
-          <el-select
-            v-model="filter.deptId"
-            placeholder="全部科室"
-            clearable
-            style="width: 180px;"
-            @change="handleQueryDeptChange"
-          >
-            <el-option
-              v-for="dept in departmentOptions"
-              :key="dept.id"
-              :label="dept.name"
-              :value="dept.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="医生">
-          <el-select
-            v-model="filter.doctorId"
-            filterable
-            clearable
-            placeholder="全部医生"
-            style="width: 220px;"
-          >
-            <el-option
-              v-for="doctor in queryDoctorOptions"
-              :key="doctor.id"
-              :label="`${doctor.name}（${doctorTitleText(doctor.title)}）`"
-              :value="doctor.id"
-            />
-          </el-select>
+        <el-form-item label="医生ID">
+          <el-input v-model="filter.doctorId" placeholder="医生ID" style="width:120px;" clearable />
         </el-form-item>
         <el-form-item label="日期">
           <el-date-picker v-model="filter.startDate" type="date" placeholder="开始日期" value-format="YYYY-MM-DD" />
@@ -51,12 +22,7 @@
 
       <el-table :data="schedules" border stripe>
         <el-table-column prop="id" label="ID" width="60" />
-        <el-table-column label="医生" min-width="180">
-          <template #default="{ row }">
-            {{ getDoctorName(row.doctorId) }}
-            <span style="color:#909399;">（ID: {{ row.doctorId }}）</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="doctorId" label="医生ID" width="80" />
         <el-table-column prop="workDate" label="日期" width="120" />
         <el-table-column label="班次" width="80">
           <template #default="{ row }">{{ row.shiftType === 1 ? '上午' : '下午' }}</template>
@@ -85,35 +51,8 @@
 
     <el-dialog v-model="showCreate" title="新建排班" width="500px">
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="90px">
-        <el-form-item label="科室" prop="deptId">
-          <el-select
-            v-model="createForm.deptId"
-            placeholder="请选择科室"
-            style="width: 100%;"
-            @change="handleCreateDeptChange"
-          >
-            <el-option
-              v-for="dept in departmentOptions"
-              :key="dept.id"
-              :label="dept.name"
-              :value="dept.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="医生" prop="doctorId">
-          <el-select
-            v-model="createForm.doctorId"
-            filterable
-            placeholder="请选择医生"
-            style="width: 100%;"
-          >
-            <el-option
-              v-for="doctor in createDoctorOptions"
-              :key="doctor.id"
-              :label="`${doctor.name}（${doctorTitleText(doctor.title)}）`"
-              :value="doctor.id"
-            />
-          </el-select>
+        <el-form-item label="医生ID" prop="doctorId">
+          <el-input-number v-model="createForm.doctorId" :min="1" />
         </el-form-item>
         <el-form-item label="出诊日期" prop="workDate">
           <el-date-picker v-model="createForm.workDate" type="date" value-format="YYYY-MM-DD" />
@@ -146,43 +85,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchSchedules, createSchedule, cancelSchedule } from '@/api/admin'
-import { fetchDoctors } from '@/api/doctor'
-import { fetchDepartments } from '@/api/department'
 
 const schedules = ref([])
-const doctorOptions = ref([])
-const departmentOptions = ref([])
 const showCreate = ref(false)
 const creating = ref(false)
 const createFormRef = ref(null)
-const filter = reactive({ deptId: null, doctorId: null, startDate: '' })
+const filter = reactive({ doctorId: '', startDate: '' })
 
 const createForm = reactive({
-  deptId: null,
-  doctorId: null,
-  workDate: '',
-  shiftType: 1,
-  totalSlots: 10,
-  slotDuration: 15,
-  startTime: '08:00:00',
-  endTime: '10:30:00'
+  doctorId: 1, workDate: '', shiftType: 1, totalSlots: 10,
+  slotDuration: 15, startTime: '08:00:00', endTime: '10:30:00'
 })
-
-const queryDoctorOptions = computed(() => {
-  if (!filter.deptId) return doctorOptions.value
-  return doctorOptions.value.filter(d => d.deptId === filter.deptId)
-})
-
-const createDoctorOptions = computed(() => {
-  if (!createForm.deptId) return doctorOptions.value
-  return doctorOptions.value.filter(d => d.deptId === createForm.deptId)
-})
-
 const createRules = {
-  deptId: [{ required: true, message: '必填' }],
   doctorId: [{ required: true, message: '必填' }],
   workDate: [{ required: true, message: '必填' }],
   shiftType: [{ required: true, message: '必填' }],
@@ -197,43 +114,6 @@ async function loadSchedules() {
   if (filter.startDate) params.startDate = filter.startDate
   const res = await fetchSchedules(params)
   schedules.value = res.data || []
-}
-
-async function loadDoctors() {
-  const res = await fetchDoctors()
-  doctorOptions.value = res.data || []
-
-  if (!createForm.deptId && doctorOptions.value.length > 0) {
-    createForm.deptId = doctorOptions.value[0].deptId || null
-  }
-
-  const firstCreateDoctor = createDoctorOptions.value[0]
-  if (!createForm.doctorId && firstCreateDoctor) {
-    createForm.doctorId = firstCreateDoctor.id
-  }
-}
-
-async function loadDepartments() {
-  const res = await fetchDepartments()
-  departmentOptions.value = res.data || []
-}
-
-function getDoctorName(doctorId) {
-  const doctor = doctorOptions.value.find(d => d.id === doctorId)
-  return doctor ? doctor.name : '未知医生'
-}
-
-function doctorTitleText(title) {
-  return title || '未设置职称'
-}
-
-function handleQueryDeptChange() {
-  filter.doctorId = null
-}
-
-function handleCreateDeptChange() {
-  const firstDoctor = createDoctorOptions.value[0]
-  createForm.doctorId = firstDoctor ? firstDoctor.id : null
 }
 
 async function handleCreate() {
@@ -254,8 +134,5 @@ async function handleCancel(id) {
   await loadSchedules()
 }
 
-onMounted(async () => {
-  await Promise.all([loadDepartments(), loadDoctors()])
-  await loadSchedules()
-})
+onMounted(() => loadSchedules())
 </script>
