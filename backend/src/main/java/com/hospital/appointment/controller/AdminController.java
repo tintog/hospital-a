@@ -68,11 +68,15 @@ public class AdminController {
     @GetMapping("/schedule/list")
     @Operation(summary = "排班列表")
     public Result<List<Schedule>> scheduleList(
+            @RequestParam(required = false) Long deptId,
             @RequestParam(required = false) Long doctorId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (doctorId != null) {
             return scheduleService.listByDoctor(doctorId, startDate, endDate);
+        }
+        if (deptId != null) {
+            return scheduleService.listByDepartment(deptId, startDate, endDate);
         }
         return scheduleService.listAll(startDate);
     }

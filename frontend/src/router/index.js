@@ -21,7 +21,7 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-    path: '/',
+    path: '/',//用户页面
     component: () => import('@/layouts/PatientLayout.vue'),
     meta: { requiresAuth: true, role: 'patient' },
     children: [
@@ -37,7 +37,7 @@ const routes = [
     ]
   },
   {
-    path: '/admin',
+    path: '/admin',//管理员页面
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: { requiresAuth: true, role: 'admin' },
     children: [
@@ -45,6 +45,7 @@ const routes = [
       { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/admin/Dashboard.vue') },
       { path: 'patients', name: 'PatientManage', component: () => import('@/views/admin/PatientManage.vue') },
       { path: 'doctors', name: 'DoctorManage', component: () => import('@/views/admin/DoctorManage.vue') },
+      { path: 'departments', name: 'DepartmentManage', component: () => import('@/views/admin/DepartmentManage.vue') },
       { path: 'schedule', name: 'ScheduleManage', component: () => import('@/views/admin/ScheduleManage.vue') },
       { path: 'appointments', name: 'AdminAppointments', component: () => import('@/views/admin/AppointmentList.vue') },
       { path: 'statistics', name: 'Statistics', component: () => import('@/views/admin/Statistics.vue') },
@@ -52,7 +53,7 @@ const routes = [
     ]
   },
   {
-    path: '/doctor',
+    path: '/doctor',//医生页面
     component: () => import('@/layouts/DoctorLayout.vue'),
     meta: { requiresAuth: true, role: 'doctor' },
     children: [
@@ -63,7 +64,7 @@ const routes = [
     ]
   },
   {
-    path: '/403',
+    path: '/403',//找不到页面
     name: 'Forbidden',
     component: { template: '<div style="text-align:center;padding:100px"><h1>403</h1><p>权限不足</p></div>' }
   }
@@ -74,15 +75,29 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+/**
+ * 路由前置守卫
+ * 在路由跳转前执行，用于权限验证、登录状态检查等
+ * @param {Object} to - 即将要进入的目标路由对象
+ * @param {Object} _from - 当前导航正要离开的路由对象
+ * @param {Function} next - 必须调用的函数，用于 resolve 这个钩子，进行下一步操作
+ */
+router.beforeEach((to, _from, next) => {
+  // 获取用户状态管理store
   const userStore = useUserStore()
 
+// 检查目标路由的元信息是否不需要认证
   if (to.meta.requiresAuth === false) {
+  // 如果不需要认证，则直接放行，进入下一个导航钩子
     next()
     return
   }
 
   if (!userStore.token) {
+// 使用next方法进行路由跳转，重定向到登录页面
+// path参数指定目标路由路径为'/login'
+// query参数传递查询字符串，包含redirect字段，值为当前要访问的完整路径(to.fullPath)
+// 这样可以在用户登录后重定向回原本想要访问的页面
     next({ path: '/login', query: { redirect: to.fullPath } })
     return
   }

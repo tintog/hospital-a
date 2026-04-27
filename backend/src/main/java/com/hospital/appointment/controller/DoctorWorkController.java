@@ -3,6 +3,7 @@ package com.hospital.appointment.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hospital.appointment.common.dto.PasswordUpdateReq;
 import com.hospital.appointment.common.dto.PhoneUpdateReq;
+import com.hospital.appointment.common.dto.VisitStatusUpdateReq;
 import com.hospital.appointment.common.result.Result;
 import com.hospital.appointment.common.vo.AppointmentVO;
 import com.hospital.appointment.common.vo.DoctorProfileVO;
@@ -26,29 +27,56 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * 医生工作站控制器
+ * 提供医生排班、患者管理、个人信息修改等功能接口
+ */
 @RestController
 @RequestMapping("/doctor")
 @Tag(name = "医生工作站接口")
 public class DoctorWorkController {
 
+    /**
+     * 排班服务接口
+     */
     @Autowired
     private ScheduleService scheduleService;
 
+    /**
+     * 预约服务接口
+     */
     @Autowired
     private AppointmentService appointmentService;
 
+    /**
+     * 医生数据访问层
+     */
     @Autowired
     private DoctorMapper doctorMapper;
 
+    /**
+     * 系统用户数据访问层
+     */
     @Autowired
     private SysUserMapper sysUserMapper;
 
+    /**
+     * 科室数据访问层
+     */
     @Autowired
     private DepartmentMapper departmentMapper;
 
+    /**
+     * 密码编码器
+     */
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * 获取医生排班信息
+     * @param authentication 当前认证信息
+     * @return 返回医生未来30天的排班信息
+     */
     @GetMapping("/my-schedule")
     @Operation(summary = "我的排班")
     public Result<List<Schedule>> mySchedule(Authentication authentication) {
@@ -61,21 +89,47 @@ public class DoctorWorkController {
         return scheduleService.listByDoctor(doctor.getId(), LocalDate.now(), LocalDate.now().plusDays(30));
     }
 
-    @GetMapping("/today-patients")
-    @Operation(summary = "今日患者")
-    public Result<Page<AppointmentVO>> todayPatients(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
-            Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-        Doctor doctor = doctorMapper.selectOne(
+    /**
+     * 获取我的患者列表
+     * @param page 页码，默认为1
+     * @param size 每页大小，默认为20
+     * @param authentication 当前认证信息
+     * @return 返回分页的患者列表
+     */
+    @GetMapping("/today-patients") // HTTP GET请求映射到"/today-patients"路径
+    @Operation(summary = "我的患者") // API操作描述，用于Swagger文档
+    public Result<Page<AppointmentVO>> todayPatients( // 方法返回分页结果，包含预约视图对象列表
+            @RequestParam(defaultValue = "1") int page, // 请求参数page，默认值为1
+            @RequestParam(defaultValue = "20") int size, // 请求参数size，默认值为20
+            @RequestParam(required = false, defaultValue = "false") Boolean history,
+            Authentication authentication) { // 认证信息参数
+        Long userId = (Long) authentication.getPrincipal(); // 从认证信息中获取用户ID
+        Doctor doctor = doctorMapper.selectOne( // 根据用户ID查询医生信息
                 new LambdaQueryWrapper<Doctor>().eq(Doctor::getUserId, userId));
+        if (doctor == null) { // 如果医生信息不存在
+            return Result.error(404, "未找到医生信息"); // 返回错误结果
+        }
+        return appointmentService.listByDoctor(doctor.getId(), history, page, size); // 调用服务方法获取预约列表
+    }
+
+    @PutMapping("/appointments/{id}/visit-status")
+    @Operation(summary = "更新就诊状态")
+    public Result<String> updateVisitStatus(@PathVariable Long id,
+                                            @RequestBody VisitStatusUpdateReq req,
+                                            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        Doctor doctor = doctorMapper.selectOne(new LambdaQueryWrapper<Doctor>().eq(Doctor::getUserId, userId));
         if (doctor == null) {
             return Result.error(404, "未找到医生信息");
         }
-        return appointmentService.listAll(null, doctor.getId(), page, size);
+        return appointmentService.updateVisitStatus(doctor.getId(), id, req.getVisitStatus());
     }
 
+    /**
+     * 获取医生个人信息
+     * @param authentication 当前认证信息
+     * @return 返回医生完整个人信息
+     */
     @GetMapping("/profile")
     @Operation(summary = "医生个人信息")
     public Result<DoctorProfileVO> profile(Authentication authentication) {
@@ -108,6 +162,12 @@ public class DoctorWorkController {
         return Result.success(vo);
     }
 
+    /**
+     * 修改医生登录账号（手机号）
+     * @param req 包含新手机号的请求体
+     * @param authentication 当前认证信息
+     * @return 返回操作结果
+     */
     @PutMapping("/profile/phone")
     @Operation(summary = "医生修改账户名（登录账号）")
     public Result<String> updatePhone(@RequestBody PhoneUpdateReq req, Authentication authentication) {
@@ -128,6 +188,12 @@ public class DoctorWorkController {
         return Result.success("账户名修改成功", null);
     }
 
+    /**
+     * 修改医生密码
+     * @param req 包含新旧密码的请求体
+     * @param authentication 当前认证信息
+     * @return 返回操作结果
+     */
     @PutMapping("/profile/password")
     @Operation(summary = "医生修改密码")
     public Result<String> updatePassword(@RequestBody PasswordUpdateReq req, Authentication authentication) {

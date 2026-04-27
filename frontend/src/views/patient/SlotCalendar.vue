@@ -47,7 +47,7 @@
       <el-form :model="bookForm" label-width="100px">
         <el-form-item label="就诊人">
           <el-select v-model="bookForm.memberId" placeholder="选择就诊人" clearable>
-            <el-option label="本人" :value="null" />
+            <el-option :label="selfMemberLabel" :value="null" />
             <el-option v-for="m in members" :key="m.id" :label="`${m.name}(${m.relation})`" :value="m.id" />
           </el-select>
         </el-form-item>
@@ -67,15 +67,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchSlotsByDate, createAppointment, mockPaymentCallback } from '@/api/appointment'
 import { fetchMembers } from '@/api/patient'
+import { useUserStore } from '@/store/user'
 import dayjs from 'dayjs'
 
 const props = defineProps({ doctorId: [String, Number] })
 const router = useRouter()
+const userStore = useUserStore()
 
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 const slots = ref([])
@@ -87,6 +89,10 @@ const bookForm = ref({ memberId: null })
 
 const statusText = { 0: '可预约', 1: '锁定中', 2: '已预约', 3: '已取消', 4: '已就诊' }
 const statusType = { 0: 'success', 1: 'warning', 2: 'info', 3: 'danger', 4: '' }
+const selfMemberLabel = computed(() => {
+  if (userStore.realName) return `${userStore.realName}（本人）`
+  return '本人'
+})
 
 const disabledDate = (time) => time.getTime() < Date.now() - 86400000
 

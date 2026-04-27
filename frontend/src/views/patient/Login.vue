@@ -46,7 +46,7 @@ const rules = {
 
 async function handleLogin() {
   await formRef.value.validate()
-  loading.value = true
+  loading.value = true//将加载状态设为 true
   try {
     const res = await patientLogin(form)
     userStore.setLoginInfo(res.data)

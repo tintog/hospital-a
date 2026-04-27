@@ -28,37 +28,52 @@ spring:
           max-idle: 10
           min-idle: 5
 
+# MyBatis-Plus 配置
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
+  # 实体类所在包路径，用于别名管理
   type-aliases-package: com.hospital.appointment.entity
+  # MyBatis-Plus 配置项
   configuration:
+    # 开启驼峰命名转换，将数据库下划线命名转换为 Java 驼峰命名
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  # 全局配置
   global-config:
+    # 数据库配置
     db-config:
+      # 主键生成策略为自增
       id-type: auto
+      # 逻辑删除字段名
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+# JWT相关配置
 jwt:
   secret: "HospitalAppointment2026SecureKeyForJWTTokenGeneration"
   expiration: 86400000
   header: Authorization
   prefix: "Bearer "
 
+# 预约相关配置
 appointment:
+  # 预约时间段锁定超时时间，单位为秒（600秒 = 10分钟）
   slot-lock-timeout: 600
   cancel-limit-hours: 24
+  # 黑名单阈值，达到此次数将进入黑名单
   blacklist-threshold: 3
+  # 黑名单持续时间，单位为天（30天）
   blacklist-days: 30
 
+# SpringDoc API文档配置
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
 
+# 日志配置
 logging:
   level:
     com.hospital.appointment: DEBUG

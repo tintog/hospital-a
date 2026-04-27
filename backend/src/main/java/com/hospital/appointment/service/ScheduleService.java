@@ -53,6 +53,28 @@ public class ScheduleService {
         return Result.success(scheduleMapper.selectList(wrapper));
     }
 
+    public Result<List<Schedule>> listByDepartment(Long deptId, LocalDate startDate, LocalDate endDate) {
+        List<Doctor> doctors = doctorMapper.selectList(new LambdaQueryWrapper<Doctor>()
+                .eq(Doctor::getDeptId, deptId)
+                .select(Doctor::getId));
+        if (doctors == null || doctors.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+
+        List<Long> doctorIds = doctors.stream().map(Doctor::getId).toList();
+        LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<Schedule>()
+                .in(Schedule::getDoctorId, doctorIds)
+                .eq(Schedule::getStatus, 1);
+        if (startDate != null) {
+            wrapper.ge(Schedule::getWorkDate, startDate);
+        }
+        if (endDate != null) {
+            wrapper.le(Schedule::getWorkDate, endDate);
+        }
+        wrapper.orderByAsc(Schedule::getWorkDate).orderByAsc(Schedule::getShiftType);
+        return Result.success(scheduleMapper.selectList(wrapper));
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Result<Schedule> create(ScheduleCreateReq req) {
         Schedule exists = scheduleMapper.selectOne(

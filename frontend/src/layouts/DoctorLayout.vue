@@ -18,7 +18,7 @@
         </el-menu-item>
         <el-menu-item index="/doctor/patients">
           <el-icon><User /></el-icon>
-          <span>今日患者</span>
+          <span>我的患者</span>
         </el-menu-item>
         <el-menu-item index="/doctor/profile">
           <el-icon><Setting /></el-icon>

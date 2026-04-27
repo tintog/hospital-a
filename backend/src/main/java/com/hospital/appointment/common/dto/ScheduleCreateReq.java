@@ -5,6 +5,11 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * 排班创建请求实体类
+ * 用于接收前端提交的排班创建请求参数
+ * 使用@Data注解自动生成getter、setter等方法
+ */
 @Data
 public class ScheduleCreateReq {
     @NotNull(message = "医生ID不能为空")

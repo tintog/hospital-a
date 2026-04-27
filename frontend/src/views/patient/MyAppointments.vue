@@ -2,15 +2,18 @@
   <div class="appointments-page">
     <el-card>
       <template #header>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
           <h3>我的预约</h3>
-          <el-select v-model="statusFilter" placeholder="筛选状态" clearable @change="loadData" style="width:140px;">
-            <el-option label="全部" :value="null" />
-            <el-option label="待支付" :value="0" />
-            <el-option label="已确认" :value="1" />
-            <el-option label="已取消" :value="2" />
-            <el-option label="已完成" :value="3" />
-          </el-select>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <el-segmented v-model="tab" :options="tabOptions" @change="handleTabChange" />
+            <el-select v-model="statusFilter" placeholder="筛选状态" clearable @change="loadData" style="width:140px;">
+              <el-option label="全部" :value="null" />
+              <el-option label="待支付" :value="0" />
+              <el-option label="已确认" :value="1" />
+              <el-option label="已取消" :value="2" />
+              <el-option label="已完成" :value="3" />
+            </el-select>
+          </div>
         </div>
       </template>
 
@@ -31,13 +34,20 @@
             <el-tag :type="statusType[row.status]">{{ row.statusDesc }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="就诊状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.visitStatus === 1 ? 'success' : 'warning'">
+              {{ row.visitStatus === 1 ? '已就诊' : '未就诊' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="memberName" label="就诊人" width="80">
           <template #default="{ row }">{{ row.memberName || '本人' }}</template>
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button
-              v-if="row.status === 0 || row.status === 1"
+              v-if="tab === 'current' && (row.status === 0 || row.status === 1)"
               type="danger"
               size="small"
               link
@@ -56,7 +66,7 @@
         v-model:current-page="currentPage"
         @current-change="loadData"
       />
-      <el-empty v-if="records.length === 0" description="暂无预约记录" />
+      <el-empty v-if="records.length === 0" :description="tab === 'current' ? '暂无当前预约' : '暂无历史预约'" />
     </el-card>
   </div>
 </template>
@@ -71,17 +81,31 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const statusFilter = ref(null)
+const tab = ref('current')
+const tabOptions = [
+  { label: '当前预约', value: 'current' },
+  { label: '历史预约', value: 'history' }
+]
 
 const statusType = { 0: 'warning', 1: 'success', 2: 'danger', 3: 'info', 4: '' }
 
 async function loadData() {
   try {
-    const params = { page: currentPage.value, size: pageSize.value }
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      history: tab.value === 'history'
+    }
     if (statusFilter.value !== null) params.status = statusFilter.value
     const res = await fetchMyAppointments(params)
     records.value = res.data.records || []
     total.value = res.data.total || 0
   } catch (e) { /* handled */ }
+}
+
+function handleTabChange() {
+  currentPage.value = 1
+  loadData()
 }
 
 async function handleCancel(row) {

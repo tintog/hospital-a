@@ -20,9 +20,14 @@
           <el-icon><User /></el-icon>
           <span>患者管理</span>
         </el-menu-item>
+
         <el-menu-item index="/admin/doctors">
           <el-icon><UserFilled /></el-icon>
           <span>医生管理</span>
+        </el-menu-item>
+        <el-menu-item index="/admin/departments">
+          <el-icon><OfficeBuilding /></el-icon>
+          <span>科室管理</span>
         </el-menu-item>
         <el-menu-item index="/admin/schedule">
           <el-icon><Calendar /></el-icon>

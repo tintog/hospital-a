@@ -5,6 +5,10 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 预约实体类
+ * 用于存储预约相关信息，对应数据库中的appointment表
+ */
 @Data
 @TableName("appointment")
 public class Appointment {
@@ -22,6 +26,7 @@ public class Appointment {
     private String cancelReason;
     private Integer cancelBy;
     private Integer noShowFlag;
+    private Integer visitStatus;
     @TableLogic
     private Integer deleted;
     private LocalDateTime createdAt;
