@@ -30,6 +30,11 @@ public class PatientService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+/**
+ * 根据患者ID获取患者信息
+ * @param patientId 患者ID
+ * @return 返回Result对象，包含患者信息或错误信息
+ */
     public Result<Patient> getProfile(Long patientId) {
         Patient patient = patientMapper.selectById(patientId);
         if (patient == null) {
@@ -39,6 +44,11 @@ public class PatientService {
         return Result.success(patient);
     }
 
+/**
+ * 根据患者ID获取关联的成员列表
+ * @param patientId 患者ID
+ * @return 返回包含成员列表的Result对象，成功状态码和成员列表数据
+ */
     public Result<List<PatientMember>> getMembers(Long patientId) {
         List<PatientMember> members = memberMapper.selectList(
                 new LambdaQueryWrapper<PatientMember>()
@@ -47,6 +57,11 @@ public class PatientService {
         return Result.success(members);
     }
 
+/**
+ * 更新患者手机号的方法
+ * @param patientId 患者ID
+ * @param req 包含新手机号的请求对象
+ */
     public Result<String> updatePhone(Long patientId, PhoneUpdateReq req) {
         Patient patient = patientMapper.selectById(patientId);
         if (patient == null) {
@@ -68,7 +83,14 @@ public class PatientService {
         return Result.success("手机号修改成功", null);
     }
 
+/**
+ * 更新患者密码
+ * @param patientId 患者ID
+ * @param req 密码更新请求对象，包含旧密码和新密码
+ * @return 返回操作结果，成功时返回提示信息
+ */
     public Result<String> updatePassword(Long patientId, PasswordUpdateReq req) {
+    // 根据患者ID查询患者信息
         Patient patient = patientMapper.selectById(patientId);
         if (patient == null) {
             throw new BusinessException("患者不存在");
@@ -78,14 +100,25 @@ public class PatientService {
         }
         if (req.getOldPassword().equals(req.getNewPassword())) {
             throw new BusinessException("新密码不能与旧密码相同");
+    // 检查新密码是否与旧密码相同，相同则抛出业务异常
         }
 
         patient.setPassword(passwordEncoder.encode(req.getNewPassword()));
         patientMapper.updateById(patient);
+    // 对新密码进行加密并更新到患者信息中
         return Result.success("密码修改成功，请重新登录", null);
+    // 更新患者信息到数据库
     }
+    // 返回成功结果，提示用户重新登录
 
+/**
+ * 添加患者成员方法
+ * @param patientId 患者ID
+ * @param req 成员信息请求对象
+ * @return 返回操作结果，包含添加成功的成员信息
+ */
     public Result<PatientMember> addMember(Long patientId, MemberReq req) {
+    // 查询是否已存在相同患者ID和身份证号的记录
         PatientMember exists = memberMapper.selectOne(
                 new LambdaQueryWrapper<PatientMember>()
                         .eq(PatientMember::getPatientId, patientId)
@@ -104,6 +137,9 @@ public class PatientService {
         return Result.success("添加成功", member);
     }
 
+/**
+ * 删除患者成员信息
+ */
     public Result<String> deleteMember(Long patientId, Long memberId) {
         PatientMember member = memberMapper.selectById(memberId);
         if (member == null || !member.getPatientId().equals(patientId)) {

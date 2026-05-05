@@ -26,6 +26,12 @@ public class PaymentService {
         paymentRecordMapper.insert(record);
     }
 
+/**
+ * 确认支付方法
+ * @param orderNo 订单编号
+ * @param transactionId 交易流水号
+ * @return 返回操作结果，包含成功或失败信息
+ */
     public Result<String> confirmPayment(String orderNo, String transactionId) {
         PaymentRecord record = paymentRecordMapper.selectByOrderNo(orderNo);
         if (record == null) {
@@ -38,6 +44,10 @@ public class PaymentService {
         return Result.success("支付确认成功", null);
     }
 
+/**
+ * 处理订单退款的方法
+ * @param orderNo 订单号，用于标识需要退款的订单
+ */
     public void refund(String orderNo) {
         PaymentRecord record = paymentRecordMapper.selectByOrderNo(orderNo);
         if (record != null && record.getStatus() == 1) {

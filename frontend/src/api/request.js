@@ -23,8 +23,6 @@ const service = axios.create({
 /**
  * 请求拦截器
  * 在请求发送前进行处理
- * @param {Object} config - 请求配置对象
- * @returns {Object} 处理后的请求配置
  */
 service.interceptors.request.use(config => {
   const userStore = useUserStore()
@@ -60,13 +58,19 @@ service.interceptors.response.use(
   error => {
     // 处理响应错误
     const status = error.response?.status
-    const msg = error.response?.data?.message || error.message || '网络错误'
+    const backendMessage = error.response?.data?.message
+    const msg = backendMessage || error.message || '网络错误'
+
     if (status === 401) {
       // 如果是401错误，清除用户状态并跳转到登录页
       const userStore = useUserStore()
       userStore.logout()
       router.push('/login')
       ElMessage.error('登录已过期，请重新登录')
+    } else if (status === 409) {
+      ElMessage.error('号源被占用，请刷新重试')
+    } else if (status === 500) {
+      ElMessage.error('系统繁忙，请稍后重试')
     } else {
       // 显示其他错误信息
       ElMessage.error(msg)

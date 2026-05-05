@@ -8,7 +8,7 @@
       <el-menu
         :default-active="currentRoute"
         router
-        background-color="#1a3a5c"
+        background-color="#545c64"
         text-color="#bfcbd9"
         active-text-color="#67C23A"
       >
@@ -56,7 +56,7 @@ function handleLogout() {
 
 <style scoped>
 .doctor-aside {
-  background: #1a3a5c;
+  background: #545c64;
   overflow-y: auto;
 }
 .aside-header {
@@ -67,7 +67,7 @@ function handleLogout() {
   color: #fff;
   font-size: 16px;
   font-weight: 600;
-  border-bottom: 1px solid #2a4a6c;
+  border-bottom: 1px solid #545c64;
 }
 .doctor-header {
   display: flex;

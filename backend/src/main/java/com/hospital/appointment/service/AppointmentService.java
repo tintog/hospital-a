@@ -80,6 +80,9 @@ public class AppointmentService {
             return Result.error(400, "号源不存在");
         }
 
+        boolean lockedByRedis = false;
+        boolean lockedByDb = false;
+
         // Try Redis lock first, fallback to DB lock if Redis is unavailable
         try {
             Long lockResult = slotLockService.lockSlot(req.getSlotId(), patientId);
@@ -88,16 +91,18 @@ public class AppointmentService {
             } else if (lockResult == 0L) {
                 return Result.error(409, "号源已被他人锁定，请刷新重试");
             }
+            lockedByRedis = true;
         } catch (Exception e) {
             log.warn("Redis锁不可用，降级为数据库锁: {}", e.getMessage());
             if (slot.getStatus() != 0) {
                 return Result.error(400, "该号源不可预约（可能已约满或停诊）");
             }
             int locked = slotMapper.lockSlotInDb(req.getSlotId(), 1, patientId,
-                    String.valueOf(System.currentTimeMillis() + 600000));
+                    LocalDateTime.now().plusMinutes(10));
             if (locked == 0) {
                 return Result.error(409, "号源已被他人锁定，请刷新重试");
             }
+            lockedByDb = true;
         }
 
 /**
@@ -120,12 +125,29 @@ public class AppointmentService {
         appointment.setVisitStatus(0); // 设置就诊状态为未就诊
         appointmentMapper.insert(appointment); // 插入预约记录到数据库
 
-        paymentService.createPaymentRecord(orderNo, req.getFee()); // 创建支付记录
+        try {
+            paymentService.createPaymentRecord(orderNo, req.getFee()); // 创建支付记录：根据订单号和费用创建支付记录
+        } catch (Exception e) {
+            if (lockedByRedis) { // 判断是否使用了Redis分布式锁
+                try {
+                    // 尝试释放Redis分布式锁，如果创建支付记录失败，需要释放锁
+                    slotLockService.unlockSlot(req.getSlotId(), patientId);
+                } catch (Exception unlockEx) {
+                    // 记录释放Redis锁失败的警告日志，但不影响主流程
+                    log.warn("支付记录创建失败后Redis解锁失败: {}", unlockEx.getMessage());
+                }
+            }
+            if (lockedByDb) { // 判断是否使用了数据库锁
+                // 如果使用了数据库锁，且支付记录创建失败，则将时间段状态更新为可用
+                slotMapper.updateStatus(req.getSlotId(), SlotStatus.AVAILABLE.getCode());
+            }
+            throw e;
+        }
 
         OrderVO vo = new OrderVO(); // 创建返回视图对象
-        vo.setOrderNo(orderNo); // 设置订单号
-        vo.setSlotId(req.getSlotId()); // 设置时间段ID
-        vo.setFee(req.getFee()); // 设置费用
+        vo.setOrderNo(orderNo);
+        vo.setSlotId(req.getSlotId());
+        vo.setFee(req.getFee());
         vo.setExpireSeconds(600); // 设置支付过期时间（10分钟）
         vo.setQrCodeUrl("/api/payment/mock-qr?orderNo=" + orderNo); // 设置支付二维码URL
 
@@ -191,6 +213,8 @@ public class AppointmentService {
        //     return Result.error(400, "就诊前24小时内不可取消");
        // }
 
+        Integer originalStatus = appointment.getStatus();
+
         appointment.setStatus(AppointmentStatus.CANCELLED.getCode()); // 更新订单状态为已取消
         appointment.setCancelReason(reason); // 设置取消原因
         appointment.setCancelBy(1); // 设置取消方（1-患者）
@@ -203,11 +227,11 @@ public class AppointmentService {
             log.warn("Redis解锁失败，已通过DB释放号源: {}", e.getMessage());
         }
 
-        if (slot != null) { // 更新排班表已预约数量
-            scheduleMapper.updateBookedSlots(slot.getScheduleId(), -1);
+        if (slot != null && AppointmentStatus.CONFIRMED.getCode().equals(originalStatus)) { // 仅已确认订单回滚已约数
+            scheduleMapper.decreaseBookedSlotsSafely(slot.getScheduleId());
         }
 
-        if (AppointmentStatus.CONFIRMED.getCode().equals(appointment.getStatus())) { // 处理退款
+        if (AppointmentStatus.CONFIRMED.getCode().equals(originalStatus)) { // 处理退款
             paymentService.refund(appointment.getOrderNo());
         }
 
@@ -230,6 +254,8 @@ public class AppointmentService {
             return Result.error(404, "订单不存在");
         }
 
+        Integer originalStatus = appointment.getStatus();
+
         appointment.setStatus(AppointmentStatus.CANCELLED.getCode()); // 更新订单状态为已取消
         appointment.setCancelReason(reason); // 设置取消原因
         appointment.setCancelBy(2); // 设置取消方（2-管理员）
@@ -237,7 +263,12 @@ public class AppointmentService {
 
         slotMapper.updateStatus(appointment.getSlotId(), SlotStatus.AVAILABLE.getCode()); // 释放号源
 
-        if (AppointmentStatus.CONFIRMED.getCode().equals(appointment.getStatus())) { // 处理退款
+        Slot slot = slotMapper.selectById(appointment.getSlotId());
+        if (slot != null && AppointmentStatus.CONFIRMED.getCode().equals(originalStatus)) {
+            scheduleMapper.decreaseBookedSlotsSafely(slot.getScheduleId());
+        }
+
+        if (AppointmentStatus.CONFIRMED.getCode().equals(originalStatus)) { // 处理退款
             paymentService.refund(appointment.getOrderNo());
         }
 
@@ -321,7 +352,7 @@ public class AppointmentService {
      * @param size 每页大小
      * @return 预约列表
      */
-    public Result<Page<AppointmentVO>> listAll(Integer status, Long doctorId, int page, int size) {
+    public Result<Page<AppointmentVO>> listAll(Integer status, Long doctorId, String doctorName, int page, int size) {
         Page<Appointment> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Appointment> wrapper = new LambdaQueryWrapper<>();
         if (status != null) { // 设置状态条件（可选）
@@ -329,10 +360,18 @@ public class AppointmentService {
         }
         if (doctorId != null) { // 设置医生ID条件（可选）
             wrapper.eq(Appointment::getDoctorId, doctorId);
-            wrapper.orderByAsc(Appointment::getCreatedAt);
-        } else {
-            wrapper.orderByDesc(Appointment::getCreatedAt); // 按创建时间降序排序
         }
+        if (doctorName != null && !doctorName.trim().isEmpty()) {
+            List<Doctor> doctors = doctorMapper.selectList(new LambdaQueryWrapper<Doctor>()
+                    .like(Doctor::getName, doctorName.trim())
+                    .select(Doctor::getId));
+            if (doctors == null || doctors.isEmpty()) {
+                return Result.success(new Page<>(page, size, 0));
+            }
+            List<Long> doctorIds = doctors.stream().map(Doctor::getId).toList();
+            wrapper.in(Appointment::getDoctorId, doctorIds);
+        }
+        wrapper.orderByDesc(Appointment::getCreatedAt); // 按创建时间降序排序
 
         Page<Appointment> result = appointmentMapper.selectPage(pageParam, wrapper);
         Page<AppointmentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
@@ -417,6 +456,12 @@ public class AppointmentService {
         Department dept = departmentMapper.selectById(a.getDeptId());
         if (dept != null) {
             vo.setDeptName(dept.getName()); // 设置科室名称
+        }
+
+        // 设置患者信息
+        Patient patient = patientMapper.selectById(a.getPatientId());
+        if (patient != null) {
+            vo.setPatientName(patient.getRealName());
         }
 
         // 设置会员信息

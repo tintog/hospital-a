@@ -8,7 +8,7 @@
       <el-menu
         :default-active="currentRoute"
         router
-        background-color="#304156"
+        background-color="#545c64"
         text-color="#bfcbd9"
         active-text-color="#409EFF"
       >
@@ -37,10 +37,10 @@
           <el-icon><List /></el-icon>
           <span>预约管理</span>
         </el-menu-item>
-        <el-menu-item index="/admin/statistics">
+    <!--   <el-menu-item index="/admin/statistics">
           <el-icon><TrendCharts /></el-icon>
           <span>统计报表</span>
-        </el-menu-item>
+        </el-menu-item>-->
         <el-menu-item index="/admin/users">
           <el-icon><UserFilled /></el-icon>
           <span>用户管理</span>
@@ -77,7 +77,7 @@ function handleLogout() {
 
 <style scoped>
 .admin-aside {
-  background: #304156;
+  background: #545c64;
   overflow-y: auto;
 }
 .aside-header {
@@ -88,7 +88,7 @@ function handleLogout() {
   color: #fff;
   font-size: 16px;
   font-weight: 600;
-  border-bottom: 1px solid #3a4a5e;
+  border-bottom: 1px solid #545c64;
 }
 .admin-header {
   display: flex;

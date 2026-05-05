@@ -13,8 +13,11 @@
         <el-table-column label="就诊时间" width="160">
           <template #default="{ row }">{{ row.visitTime ? row.visitTime.substring(5, 16) : '-' }}</template>
         </el-table-column>
+        <el-table-column prop="patientName" label="患者姓名" width="120">
+          <template #default="{ row }">{{ row.patientName || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="memberName" label="就诊人" width="100">
-          <template #default="{ row }">{{ row.memberName || '本人' }}</template>
+          <template #default="{ row }">{{ row.memberName || row.patientName || '本人' }}</template>
         </el-table-column>
         <el-table-column label="预约状态" width="100">
           <template #default="{ row }">

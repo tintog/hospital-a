@@ -19,4 +19,7 @@ public interface ScheduleMapper extends BaseMapper<Schedule> {
  */
     @Update("UPDATE schedule SET booked_slots = booked_slots + #{delta} WHERE id = #{scheduleId}")
     int updateBookedSlots(@Param("scheduleId") Long scheduleId, @Param("delta") int delta);
+
+    @Update("UPDATE schedule SET booked_slots = CASE WHEN booked_slots > 0 THEN booked_slots - 1 ELSE 0 END WHERE id = #{scheduleId}")
+    int decreaseBookedSlotsSafely(@Param("scheduleId") Long scheduleId);
 }

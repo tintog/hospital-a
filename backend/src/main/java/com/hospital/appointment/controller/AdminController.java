@@ -92,9 +92,10 @@ public class AdminController {
     public Result<Page<AppointmentVO>> appointmentList(
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) String doctorName,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return appointmentService.listAll(status, doctorId, page, size);
+        return appointmentService.listAll(status, doctorId, doctorName, page, size);
     }
 
     @PostMapping("/appointment/{id}/cancel")

@@ -1,13 +1,19 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { defineStore } from 'pinia'  // 从pinia库中导入defineStore函数，用于定义状态存储
+import { ref } from 'vue'          // 从vue库中导入ref函数，用于创建响应式引用
 
+/**
+ * 用户状态存储
+ * 使用Pinia创建的用户状态管理store，包含用户信息、登录状态等功能
+ */
 export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('token') || '')
-  const userId = ref(localStorage.getItem('userId') || '')
-  const username = ref(localStorage.getItem('username') || '')
-  const realName = ref(localStorage.getItem('realName') || '')
-  const role = ref(localStorage.getItem('role') || '')
-  const phone = ref(localStorage.getItem('phone') || '')
+
+  // 从localStorage中获取用户信息，如果不存在则使用空字符串作为默认值
+  const token = ref(localStorage.getItem('token') || '')      // 用户认证令牌
+  const userId = ref(localStorage.getItem('userId') || '')      // 用户唯一标识ID
+  const username = ref(localStorage.getItem('username') || '')  // 用户登录名
+  const realName = ref(localStorage.getItem('realName') || '') // 用户真实姓名
+  const role = ref(localStorage.getItem('role') || '')          // 用户角色
+  const phone = ref(localStorage.getItem('phone') || '')        // 用户手机号
 
 /**
  * 设置用户登录信息函数

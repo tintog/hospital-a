@@ -52,29 +52,42 @@ public class AdminManageService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+/**
+ * 分页查询患者列表
+ */
     public Result<Page<AdminPatientVO>> listPatients(String phone, String realName, Integer authStatus, Integer blacklistStatus, int page, int size) {
+    // 创建分页参数对象
         Page<Patient> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Patient> wrapper = new LambdaQueryWrapper<>();
+    // 如果手机号不为空，添加手机号模糊查询条件
         if (StringUtils.hasText(phone)) {
             wrapper.like(Patient::getPhone, phone);
         }
+    // 如果真实姓名不为空，添加姓名模糊查询条件
         if (StringUtils.hasText(realName)) {
             wrapper.like(Patient::getRealName, realName);
         }
+    // 如果认证状态不为空，添加认证状态精确查询条件
         if (authStatus != null) {
             wrapper.eq(Patient::getAuthStatus, authStatus);
         }
+    // 处理黑名单状态查询条件
         if (blacklistStatus != null) {
             LocalDateTime now = LocalDateTime.now();
             if (blacklistStatus == 1) {
+            // 查询在黑名单中的患者（黑名单结束时间大于当前时间）
                 wrapper.isNotNull(Patient::getBlacklistEndTime).gt(Patient::getBlacklistEndTime, now);
             } else if (blacklistStatus == 0) {
+            // 查询不在黑名单中的患者（黑名单结束时间为空或小于等于当前时间）
                 wrapper.and(w -> w.isNull(Patient::getBlacklistEndTime).or().le(Patient::getBlacklistEndTime, now));
             }
         }
+    // 按创建时间降序排序
         wrapper.orderByDesc(Patient::getCreatedAt);
 
+    // 执行分页查询
         Page<Patient> result = patientMapper.selectPage(pageParam, wrapper);
+    // 创建VO分页对象并转换数据
         Page<AdminPatientVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         voPage.setRecords(result.getRecords().stream().map(this::toPatientVO).collect(Collectors.toList()));
         return Result.success(voPage);
@@ -84,6 +97,7 @@ public class AdminManageService {
         Patient patient = patientMapper.selectById(id);
         if (patient == null) {
             throw new BusinessException("患者不存在");
+    // 返回成功结果
         }
         return Result.success(toPatientVO(patient));
     }
@@ -120,28 +134,40 @@ public class AdminManageService {
         return Result.success("患者已删除", null);
     }
 
+/**
+ * 分页查询医生列表
+ */
     public Result<Page<AdminDoctorVO>> listDoctors(String name, Long deptId, String title, Integer status, int page, int size) {
+    // 创建分页参数对象
         Page<Doctor> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
+    // 如果姓名不为空，添加姓名模糊查询条件
         if (StringUtils.hasText(name)) {
             wrapper.like(Doctor::getName, name);
         }
+    // 如果科室ID不为空，添加科室ID精确查询条件
         if (deptId != null) {
             wrapper.eq(Doctor::getDeptId, deptId);
         }
+    // 如果职称不为空，添加职称精确查询条件
         if (StringUtils.hasText(title)) {
             wrapper.eq(Doctor::getTitle, title);
         }
+    // 按ID升序排序
         wrapper.orderByAsc(Doctor::getId);
 
+    // 执行分页查询
         Page<Doctor> result = doctorMapper.selectPage(pageParam, wrapper);
+    // 将查询结果转换为VO对象，并根据状态进行过滤
         List<AdminDoctorVO> records = result.getRecords().stream()
-                .map(this::toDoctorVO)
-                .filter(vo -> status == null || status.equals(vo.getStatus()))
+                .map(this::toDoctorVO)  // 转换为VO对象
+                .filter(vo -> status == null || status.equals(vo.getStatus()))  // 状态过滤
                 .collect(Collectors.toList());
 
+    // 创建VO分页对象并设置结果
         Page<AdminDoctorVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         voPage.setRecords(records);
+    // 返回成功结果
         return Result.success(voPage);
     }
 

@@ -43,6 +43,8 @@ const rules = {
 }
 
 async function handleLogin() {
+// 使用 await 等待表单验证完成
+// validate() 是表单的验证方法，它会验证表单中的所有字段
   await formRef.value.validate()
   loading.value = true
   try {
@@ -69,7 +71,8 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: url('/login-bg.jpg') no-repeat center center;
+  background-size: cover;
 }
 .login-card {
   width: 400px;
@@ -78,8 +81,8 @@ async function handleLogin() {
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
-.login-header { text-align: center; margin-bottom: 30px; }
-.login-header h2 { margin: 12px 0 4px; color: #303133; }
+.login-heade r { text-align: center; margin-bottom: 30px; }
+.login-header  h2 { margin: 12px 0 4px; color: #303133; }
 .login-header p { color: #909399; font-size: 14px; }
 .login-footer { text-align: center; margin-top: 16px; }
 .login-footer a { color: #409EFF; text-decoration: none; font-size: 13px; }

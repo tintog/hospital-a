@@ -37,7 +37,7 @@
           </template>
         </el-table-column>
         <el-table-column label="黑名单截止" width="180">
-          <template #default="{ row }">{{ row.blacklistEndTime || '-' }}</template>
+          <template #default="{ row }">{{ formatBlacklistEnd(row.blacklistEndTime) }}</template>
         </el-table-column>
         <el-table-column prop="recentAppointmentCount" label="预约数" width="90" />
         <el-table-column label="注册时间" width="180">
@@ -164,6 +164,13 @@ async function handleUnblacklist(id) {
   await unblacklistPatient(id)
   ElMessage.success('已解除黑名单')
   await loadData()
+}
+
+function formatBlacklistEnd(value) {
+  if (!value) return '-'
+  const end = new Date(value)
+  if (Number.isNaN(end.getTime())) return value
+  return end.getTime() > Date.now() ? value : '-'
 }
 
 async function handleDelete(id) {

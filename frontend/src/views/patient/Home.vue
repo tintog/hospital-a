@@ -49,6 +49,7 @@ const quickActions = [
   { title: '预约挂号', desc: '选择科室和医生进行预约', icon: 'Calendar', color: '#409EFF', path: '/departments' },
   { title: '我的预约', desc: '查看预约记录和状态', icon: 'List', color: '#67C23A', path: '/appointments' },
   { title: '就诊人管理', desc: '添加/管理就诊人信息', icon: 'User', color: '#E6A23C', path: '/members' }
+
 ]
 
 onMounted(async () => {
@@ -65,7 +66,7 @@ function goToDept(deptId) {
 
 <style scoped>
 .welcome-banner {
-  background: linear-gradient(135deg, #409EFF, #53a8ff);
+  background: linear-gradient(135deg, rgb(160, 207, 255),rgb(121, 187, 255));
   color: #fff;
   padding: 40px;
   border-radius: 12px;

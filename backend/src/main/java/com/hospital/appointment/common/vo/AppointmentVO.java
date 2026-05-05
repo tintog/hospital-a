@@ -24,6 +24,7 @@ public class AppointmentVO {
     private Integer status;             // 预约状态
     private String statusDesc;          // 预约状态描述
     private String memberName;          // 预约人姓名
+    private String patientName;         // 患者姓名
     private Integer visitStatus;        // 就诊状态：0未就诊，1已就诊
     private String visitStatusDesc;     // 就诊状态描述
     private LocalDateTime payTime;      // 支付时间

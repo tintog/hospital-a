@@ -75,7 +75,8 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: url('/login-bg.jpg') no-repeat center center;
+  background-size: cover;
 }
 .login-card {
   width: 400px;

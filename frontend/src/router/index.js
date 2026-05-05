@@ -48,7 +48,7 @@ const routes = [
       { path: 'departments', name: 'DepartmentManage', component: () => import('@/views/admin/DepartmentManage.vue') },
       { path: 'schedule', name: 'ScheduleManage', component: () => import('@/views/admin/ScheduleManage.vue') },
       { path: 'appointments', name: 'AdminAppointments', component: () => import('@/views/admin/AppointmentList.vue') },
-      { path: 'statistics', name: 'Statistics', component: () => import('@/views/admin/Statistics.vue') },
+     // { path: 'statistics', name: 'Statistics', component: () => import('@/views/admin/Statistics.vue') },
       { path: 'users', name: 'SystemUser', component: () => import('@/views/admin/SystemUser.vue') }
     ]
   },
@@ -94,8 +94,6 @@ router.beforeEach((to, _from, next) => {
   }
 
   if (!userStore.token) {
-// 使用next方法进行路由跳转，重定向到登录页面
-// path参数指定目标路由路径为'/login'
 // query参数传递查询字符串，包含redirect字段，值为当前要访问的完整路径(to.fullPath)
 // 这样可以在用户登录后重定向回原本想要访问的页面
     next({ path: '/login', query: { redirect: to.fullPath } })
@@ -105,9 +103,10 @@ router.beforeEach((to, _from, next) => {
   const routeRole = to.meta.role
   const userRole = userStore.role
 
+  // 检查用户角色是否为管理员，并且当前用户角色不是管理员或部门管理员
   if (routeRole === 'admin' && !['admin', 'dept_admin'].includes(userRole)) {
     next({ path: '/403' })
-    return
+     return
   }
   if (routeRole === 'doctor' && userRole !== 'doctor') {
     next({ path: '/403' })

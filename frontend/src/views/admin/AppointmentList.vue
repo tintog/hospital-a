@@ -12,8 +12,8 @@
             <el-option label="已完成" :value="3" />
           </el-select>
         </el-form-item>
-        <el-form-item label="医生ID">
-          <el-input v-model="filter.doctorId" placeholder="医生ID" style="width:100px;" clearable @change="loadData" />
+        <el-form-item label="医生姓名">
+          <el-input v-model="filter.doctorName" placeholder="医生姓名" style="width:140px;" clearable @change="loadData" />
         </el-form-item>
       </el-form>
 
@@ -69,13 +69,13 @@ import { fetchAdminAppointments, adminCancelAppointment } from '@/api/admin'
 const records = ref([])
 const total = ref(0)
 const page = ref(1)
-const filter = reactive({ status: null, doctorId: '' })
+const filter = reactive({ status: null, doctorName: '' })
 const statusType = { 0: 'warning', 1: 'success', 2: 'danger', 3: 'info', 4: '' }
 
 async function loadData() {
   const params = { page: page.value, size: 10 }
   if (filter.status !== null && filter.status !== '') params.status = filter.status
-  if (filter.doctorId) params.doctorId = filter.doctorId
+  if (filter.doctorName) params.doctorName = filter.doctorName
   const res = await fetchAdminAppointments(params)
   records.value = res.data.records || []
   total.value = res.data.total || 0
