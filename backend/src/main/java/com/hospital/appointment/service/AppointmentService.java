@@ -284,28 +284,39 @@ public class AppointmentService {
      * @return 预约列表
      */
     public Result<Page<AppointmentVO>> listByPatient(Long patientId, Integer status, Boolean history, int page, int size) {
+        // 创建分页参数对象，指定当前页码和每页大小
         Page<Appointment> pageParam = new Page<>(page, size);
+        // 创建Lambda查询包装器，并设置患者ID作为查询条件
         LambdaQueryWrapper<Appointment> wrapper = new LambdaQueryWrapper<Appointment>()
                 .eq(Appointment::getPatientId, patientId); // 设置患者ID条件
+        // 如果状态参数不为空，则添加状态条件到查询包装器中
         if (status != null) { // 设置状态条件（可选）
             wrapper.eq(Appointment::getStatus, status);
         }
 
+        // 根据history参数决定查询历史预约还是当前预约
         if (Boolean.TRUE.equals(history)) {
+            // 查询历史预约：包括已取消、已就诊和已完成状态的预约
             wrapper.and(w -> w.eq(Appointment::getStatus, AppointmentStatus.CANCELLED.getCode())
                     .or().eq(Appointment::getVisitStatus, 1)
                     .or().eq(Appointment::getStatus, AppointmentStatus.COMPLETED.getCode()));
         } else {
+            // 查询当前预约：排除已取消和已完成的预约，且未就诊或就诊状态为0
             wrapper.ne(Appointment::getStatus, AppointmentStatus.CANCELLED.getCode())
                     .ne(Appointment::getStatus, AppointmentStatus.COMPLETED.getCode())
                     .and(w -> w.isNull(Appointment::getVisitStatus).or().eq(Appointment::getVisitStatus, 0));
         }
 
+        // 按创建时间降序排序结果
         wrapper.orderByDesc(Appointment::getCreatedAt); // 按创建时间降序排序
 
+        // 执行分页查询，获取预约记录
         Page<Appointment> result = appointmentMapper.selectPage(pageParam, wrapper);
+        // 创建VO分页对象，复制分页信息
         Page<AppointmentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        // 将预约记录列表转换为VO对象列表
         voPage.setRecords(result.getRecords().stream().map(this::toVO).collect(Collectors.toList())); // 转换为VO对象
+        // 返回成功结果，包含转换后的VO分页数据
         return Result.success(voPage);
     }
 
